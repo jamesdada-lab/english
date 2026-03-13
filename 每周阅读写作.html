@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>张姆斯的每周阅读 | Interactive Reading & Writing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a; --secondary: #475569; --accent: #2563eb; 
+            --purple: #7c3aed; --bg: #f8fafc; --surface: #ffffff;
+            --border: #e2e8f0; --success: #059669; --error: #dc2626;
+        }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--primary); margin: 0; padding: 0; height: 100vh; overflow: hidden; }
+
+        /* 顶部导航 */
+        .top-nav { background: var(--surface); padding: 1rem 3rem; display: flex; justify-content: space-between; align-items: center; z-index: 100; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .logo { font-size: 1.5rem; font-weight: 800; color: var(--accent); letter-spacing: -0.5px; }
+        .date-goal { color: var(--secondary); font-size: 0.95rem; font-weight: 500; background: var(--bg); padding: 6px 12px; border-radius: 20px;}
+
+        /* 文章切换导航 */
+        .article-nav { background: var(--surface); padding: 1rem 3rem; display: flex; gap: 1rem; border-bottom: 1px solid var(--border); overflow-x: auto; white-space: nowrap;}
+        .nav-btn { padding: 0.6rem 1.2rem; border: none; border-radius: 20px; background: var(--bg); cursor: pointer; font-weight: 600; color: var(--secondary); transition: all 0.2s; font-size: 0.95rem;}
+        .nav-btn:hover { background: #e2e8f0; color: var(--primary); }
+        .nav-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+
+        .main-container { display: flex; max-width: 1400px; margin: 0 auto; gap: 2rem; padding: 2rem 3rem; height: calc(100vh - 140px); box-sizing: border-box;}
+
+        /* --- 左侧沉浸式阅读区 --- */
+        .reading-col { flex: 5.5; background: transparent; overflow-y: auto; height: 100%; box-sizing: border-box; padding-right: 1rem; }
+        
+        .tools-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: var(--surface); padding: 10px 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10;}
+        .tool-group { display: flex; gap: 8px; }
+        .icon-btn { background: var(--bg); border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-size: 0.95rem; color: var(--secondary); font-weight: 600; display: flex; align-items: center; gap: 6px; transition: all 0.2s;}
+        .icon-btn:hover { background: #e2e8f0; color: var(--primary); }
+        
+        /* 动态 Emoji 纯 CSS 横幅 */
+        .article-hero-banner { width: 100%; height: 180px; border-radius: 16px; margin-bottom: 2rem; display: flex; align-items: center; justify-content: center; font-size: 5rem; box-shadow: inset 0 0 20px rgba(0,0,0,0.05), 0 4px 6px -1px rgba(0,0,0,0.05); transition: background 0.5s ease; user-select: none;}
+        
+        .article-title { font-family: 'Merriweather', serif; font-size: 2.4rem; font-weight: 800; line-height: 1.25; margin: 0 0 1.5rem 0; color: var(--primary); letter-spacing: -0.5px;}
+        
+        .level-tabs { display: flex; gap: 1rem; margin: 0; padding: 0; }
+        .level-tab { font-size: 1rem; font-weight: 700; color: var(--secondary); cursor: pointer; padding: 6px 12px; border-radius: 8px; transition: all 0.2s;}
+        .level-tab:hover { background: var(--bg); }
+        .level-tab.active { color: var(--accent); background: #eff6ff; }
+        .level-tab.locked { color: #94a3b8; cursor: not-allowed; opacity: 0.7;}
+
+        /* 杂志级首字下沉排版 */
+        .article-body { font-family: 'Merriweather', serif; font-size: 1.25rem; line-height: 2.1; color: #334155; text-align: justify; transition: font-size 0.3s; padding-bottom: 4rem;}
+        .article-body::first-letter { font-size: 4rem; font-weight: 700; color: var(--primary); float: left; margin-right: 12px; line-height: 0.8; margin-top: 6px; font-family: 'Inter', sans-serif;}
+        
+        .inline-vocab { font-weight: 700; color: var(--primary); text-decoration: underline; text-decoration-style: dotted; text-decoration-color: var(--purple); text-decoration-thickness: 2px; text-underline-offset: 4px; cursor: pointer; padding: 0 2px; transition: background 0.2s; }
+        .inline-vocab:hover { background: #f3e8ff; border-radius: 4px;}
+
+        /* --- 右侧悬浮任务区 --- */
+        .activity-col { flex: 4.5; display: flex; flex-direction: column; height: 100%; }
+        .activity-panel { background: var(--surface); border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01); display: flex; flex-direction: column; height: 100%; overflow: hidden; border: 1px solid var(--border);}
+        .panel-header { background: var(--surface); padding: 1.2rem 1.5rem; font-weight: 800; border-bottom: 1px solid var(--border); font-size: 1.1rem; flex-shrink: 0; color: var(--primary);}
+        .panel-content { padding: 1.5rem; overflow-y: auto; flex-grow: 1; background: #fafaf9;}
+        
+        .section-title { font-size: 1.05rem; font-weight: 800; margin: 2rem 0 1rem 0; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.5px;}
+        .section-title:first-child { margin-top: 0; }
+        
+        /* 模块样式 */
+        .chunk-box { background: white; border: 1px solid var(--border); padding: 20px; border-radius: 12px; font-family: 'Merriweather', serif; font-size: 1.15rem; line-height: 2.4; margin-bottom: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02);}
+        .chunk { display: inline-block; padding: 2px 8px; margin: 0 2px; background: var(--bg); border: 1px solid #cbd5e1; border-radius: 6px; border-bottom: 3px solid #93c5fd; cursor: pointer; transition: all 0.2s;}
+        .chunk:hover { background: #eff6ff; border-bottom-color: var(--accent); transform: translateY(-1px);}
+
+        .question { margin-bottom: 1.5rem; background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.02);}
+        .q-text { font-weight: 700; margin-bottom: 1rem; line-height: 1.5; font-size: 1.05rem;}
+        .q-context { font-style: italic; color: var(--secondary); background: #f8fafc; padding: 12px; border-left: 4px solid var(--purple); margin-bottom: 15px; font-size: 0.95rem; border-radius: 0 8px 8px 0;}
+        .options label { display: flex; align-items: flex-start; padding: 12px 15px; border: 2px solid var(--bg); border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; font-weight: 500;}
+        .options label:hover { background: var(--bg); border-color: #cbd5e1; }
+        .options input { margin-right: 12px; margin-top: 4px; accent-color: var(--accent); transform: scale(1.2);}
+        
+        /* 写作区域样式 */
+        .hint-container { margin-bottom: 12px; }
+        .hint-label { font-size: 0.85rem; font-weight: 700; color: var(--secondary); margin-bottom: 6px; display: block;}
+        .hint-pill { display: inline-block; background: #eff6ff; color: var(--accent); padding: 6px 12px; border-radius: 12px; font-size: 0.9rem; font-weight: 700; margin-right: 8px; margin-bottom: 8px; border: 1px solid #bfdbfe; cursor: pointer; transition: all 0.2s; user-select: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
+        .hint-pill:hover { background: var(--accent); color: white; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);}
+        .hint-pill:active { transform: translateY(0); }
+        
+        .writing-area { width: 100%; box-sizing: border-box; padding: 15px; border: 2px solid var(--border); border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 1.05rem; resize: vertical; min-height: 110px; line-height: 1.6; transition: border-color 0.2s; color: var(--primary); font-weight: 500;}
+        .writing-area:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .teacher-feedback { background: #fdf4ff; border-left: 4px solid #c026d3; padding: 15px; margin-top: 15px; border-radius: 0 8px 8px 0; font-size: 0.95rem; display: none; color: #4a044e; line-height: 1.6;}
+
+        .submit-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; font-size: 1.1rem; font-weight: 700; border-radius: 12px; cursor: pointer; flex-shrink: 0; margin-top: 1rem; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);}
+        .submit-btn:hover { background: #1e293b; }
+        .submit-btn:disabled { background: var(--border); color: #94a3b8; cursor: not-allowed; box-shadow: none;}
+        
+        .feedback { margin-top: 1rem; font-weight: 700; text-align: center; min-height: 20px; font-size: 1.1rem;}
+        .unlock-msg { padding: 1rem; background: #ecfdf3; border: 1px solid #a6f4c5; border-radius: 8px; color: var(--success); text-align: center; display: none; margin-top: 1rem; font-weight: 700;}
+
+        /* 字典弹窗 */
+        #vocab-popup { position: absolute; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 1000; display: none; width: 300px; border: 1px solid var(--border); }
+        .popup-header { font-size: 0.75rem; font-weight: 800; color: var(--purple); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; }
+        .close-btn { cursor: pointer; font-size: 1.2rem; color: #94a3b8; line-height: 0.5;}
+        .close-btn:hover { color: var(--primary); }
+        .popup-word-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .popup-word { font-size: 1.5rem; font-weight: 800; color: var(--primary); font-family: 'Merriweather', serif;}
+        .popup-speak { cursor: pointer; font-size: 1.2rem; background: var(--bg); border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;}
+        .popup-speak:hover { background: #e2e8f0; }
+        .popup-def { font-size: 1rem; color: var(--secondary); line-height: 1.6; }
+
+        /* ========================================= */
+        /* 📱 手机端适配 (Mobile Responsiveness)     */
+        /* ========================================= */
+        @media (max-width: 992px) {
+            body { 
+                height: auto; 
+                overflow: auto; /* 允许全局自然滚动 */
+                background-color: var(--surface); /* 手机端背景纯白更舒服 */
+            }
+            .top-nav { padding: 1rem; flex-wrap: wrap; gap: 10px; justify-content: center;}
+            .date-goal { display: none; /* 手机端隐藏副标题，保持顶部简洁 */ }
+            .article-nav { padding: 1rem; justify-content: flex-start;}
+            .nav-btn { flex-shrink: 0; }
+            
+            .main-container { 
+                flex-direction: column; /* 改为上下堆叠布局 */
+                padding: 1rem; 
+                height: auto; 
+                gap: 2rem; 
+            }
+            
+            .reading-col { 
+                flex: none; 
+                width: 100%; 
+                height: auto; 
+                overflow: visible; 
+                padding: 1rem; 
+                padding-right: 1rem;
+                border: none;
+                box-shadow: none;
+            }
+            
+            .tools-bar { 
+                flex-direction: column; 
+                align-items: stretch; 
+                gap: 15px; 
+                position: static; /* 手机端取消吸顶，节省阅读空间 */
+                padding: 15px;
+            }
+            .level-tabs { justify-content: center; width: 100%; }
+            .tool-group { justify-content: space-between; width: 100%;}
+            .icon-btn { flex: 1; justify-content: center; } /* 按钮等宽平分 */
+
+            .article-hero-banner { font-size: 3.5rem; height: 120px; border-radius: 12px;}
+            .article-title { font-size: 2rem; }
+            .article-body { font-size: 1.15rem; padding-bottom: 2rem;}
+
+            .activity-col { 
+                flex: none; 
+                width: 100%; 
+                height: auto; 
+            }
+            .activity-panel { 
+                height: auto; 
+                overflow: visible; 
+                border-radius: 12px;
+            }
+            .panel-content { 
+                overflow: visible; 
+                padding: 1rem;
+            }
+            
+            /* 手机端字典弹窗全宽优化 */
+            #vocab-popup {
+                width: 90vw !important; /* 强制手机端宽度 */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header class="top-nav">
+    <div class="logo">张姆斯的每周阅读</div>
+    <div class="date-goal">Tech & Engineering | 30 Mins Daily Goal</div>
+</header>
+
+<div class="article-nav" id="article-nav"></div>
+
+<div class="main-container">
+    <div class="reading-col">
+        <div class="tools-bar">
+            <div class="level-tabs" id="level-tabs">
+                <div class="level-tab active" onclick="switchLevel(500)" id="tab-500">500L</div>
+                <div class="level-tab locked" onclick="attemptChallenge(550)" id="tab-550">🔒 550L</div>
+                <div class="level-tab locked" onclick="attemptChallenge(600)" id="tab-600">🔒 600L</div>
+            </div>
+            <div class="tool-group">
+                <button class="icon-btn" onclick="adjustFontSize(-0.1)">A-</button>
+                <button class="icon-btn" onclick="adjustFontSize(0.1)">A+</button>
+                <button class="icon-btn" id="btn-read" onclick="toggleReadAloud()">🎧 Listen</button>
+            </div>
+        </div>
+
+        <div class="article-hero-banner" id="banner-display"></div>
+        <h1 class="article-title" id="title-display">Loading...</h1>
+        <div class="article-body" id="content-display"></div>
+    </div>
+
+    <div class="activity-col">
+        <div class="activity-panel">
+            <div class="panel-header">Learning Station</div>
+            <div class="panel-content">
+                
+                <div class="section-title">✂️ Chunk Reading</div>
+                <div id="chunk-display"></div>
+                <div style="font-size:0.85rem; color:var(--secondary); text-align:center; margin-bottom: 2rem; font-weight: 500;">💡 Click on any text block to hear how it sounds!</div>
+
+                <div class="section-title">🤔 Guess the Word</div>
+                <div id="guess-display"></div>
+
+                <div class="section-title">✍️ Writing Challenge</div>
+                <div id="writing-display"></div>
+                
+                <button class="submit-btn" id="submit-btn" onclick="checkAllAnswers()">Submit Answers & Get Feedback</button>
+                <div class="feedback" id="feedback-display"></div>
+                <div class="unlock-msg" id="unlock-msg">
+                    🎉 Outstanding! You tackled the writing challenge! Challenge Levels 550L & 600L are now unlocked!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="vocab-popup">
+    <div class="popup-header"><span>Dictionary</span><span class="close-btn" onclick="closePopup()">×</span></div>
+    <div class="popup-word-row"><span class="popup-word" id="popup-word-text">word</span><button class="popup-speak" onclick="speakWord()">🔊</button></div>
+    <div class="popup-def" id="popup-def-text">Definition goes here.</div>
+</div>
+
+<script>
+    const newsData = {
+        1: {
+            navTitle: "Vex Champions",
+            title: "Robot Champions: Fighting for Gold in the Vex Arena",
+            bannerEmoji: "🤖🏆",
+            bannerGradient: "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)", 
+            levels: {
+                500: "Imagine building a machine that can move, lift blocks, and even score points in a big game. This is what thousands of students do every year with a special system called Vex V5. Using smart parts like a brain and motors, kids create their own robots from scratch. In early March, a big robot competition started in many cities. Teams of students worked incredibly hard for weeks to build a <span class='inline-vocab' onclick='openPopup(event, \"unique\")'>unique</span> machine. They were so excited to show it to everyone.<br><br>One team had a bold robot. It had a long arm and strong wheels. Its main job was to pick up heavy green cubes and put them high up on a platform. The students spent many afternoons testing their robot to make it faster. They needed to program it, which means giving it a set of rules to follow. The robot had to <span class='inline-vocab' onclick='openPopup(event, \"execute\")'>execute</span> these instructions autonomously—without any human help—for the first part of the game. Then, the kids could use a special remote control to move it.<br><br>At the arena, many people gathered to watch. The team was nervous but very proud. They loved seeing all the other robots and making new friends. Vex V5 is not just about winning medals. It is about learning to solve problems together and thinking like an actual <span class='inline-vocab' onclick='openPopup(event, \"engineer\")'>engineer</span>. This technology shows us that young people have amazing ideas for the future of robotics. The team promised to keep improving their robot for the next event.",
+                550: "Imagine constructing a machine designed to move, lift objects, and even score points in a complex competition. This is what thousands of students accomplish annually using an advanced system called Vex V5. Utilizing components like a central processing brain and powerful motors, they create their own robots from scratch. In early March, a significant regional robot competition commenced in several cities. Teams of dedicated students labored for weeks to construct a <span class='inline-vocab' onclick='openPopup(event, \"unique\")'>unique</span>, high-performance machine. They were enthusiastic about presenting their creation.<br><br>One team developed a highly effective robot with a versatile arm and strong traction wheels. Its primary objective was to lift heavy green cubes and place them securely onto an elevated platform. The students spent numerous afternoons analyzing their design and programming the machine. Programming means providing the robot with a precise set of instructions to follow. The robot was required to <span class='inline-vocab' onclick='openPopup(event, \"execute\")'>execute</span> these instructions autonomously—without human help—for the initial segment of the game. Afterward, the students could manage its movements using a remote control.<br><br>At the arena, a large crowd gathered to witness the matches. The team members were slightly anxious but incredibly proud of their engineering achievement. They appreciated seeing the other creative designs and connecting with fellow roboticists. Participating in Vex V5 is not just about receiving awards. It is about developing teamwork skills and thinking critically like a real-world <span class='inline-vocab' onclick='openPopup(event, \"engineer\")'>engineer</span>. This advanced technology demonstrates that young students have brilliant solutions for the future. The team is already planning to refine their robot for the next challenge.",
+                600: "Consider constructing an autonomous machine engineered to navigate a designated field, manipulated to perform intricate tasks, and ultimately score points within a complex, competitive environment. This is the challenge thousands of students successfully undertake annually utilizing the sophisticated Vex V5 robotics system. Leveraging components such as a programmable brain and high-torque motors, they create unique robots from scratch. In early March, a significant regional robot competition commenced, drawing participants from across several cities. Dedicated teams worked tirelessly for weeks to build a <span class='inline-vocab' onclick='openPopup(event, \"unique\")'>unique</span> and highly advanced robotic platform.<br><br>One particularly impressive team engineered a versatile robot featuring a precise robotic arm and a robust, high-traction drivetrain. Its core objective was to manipulate heavy green cubes and deposit them onto a designated elevated platform for maximum points. The students spent countless afternoons optimizing their creation and implementing complex programming. Programming is the process of providing the robot with a precise sequence of operational instructions. The machine was required to <span class='inline-vocab' onclick='openPopup(event, \"execute\")'>execute</span> these instructions autonomously—without human intervention—for the initial portion of the game. Following this, the students could manually control its movements utilizing a remote transmitter.<br><br>At the arena, a significant audience gathered to witness the matches. The team members experienced some initial anxiety but ultimately felt immensely proud of their engineering accomplishment. They thoroughly enjoyed examining the diverse array of robotic designs and networking with fellow competitors. Participating in a Vex V5 event is more than just a quest for victory. It is about cultivating essential teamwork and problem-solving skills, preparing students to become the <span class='inline-vocab' onclick='openPopup(event, \"engineer\")'>engineers</span> of the future. This complex technology demonstrates that young innovators possess remarkable potential. The team is already analyzing performance data to refine their machine for the next season."
+            },
+            dict: { "unique": "Being the only one of its kind; unlike anything else.", "execute": "To carry out or complete a plan, order, or course of action.", "engineer": "A person who designs, builds, or maintains engines or machines." },
+            chunks: [ "The robot was required / to execute these instructions autonomously / without any human help / for the first part / of the game." ],
+            guess: [
+                { word: "scratch", context: "kids create their own robots from scratch.", options: ["Using old, broken toys", "From the very beginning with basic parts", "By scratching the metal with tools"], answer: 1 },
+                { word: "autonomously", context: "The robot had to execute these instructions autonomously—without any human help.", options: ["By itself automatically", "Very slowly", "With a video game controller"], answer: 0 }
+            ],
+            writing: [
+                {
+                    q: "What is the main idea of this article?",
+                    hints: ["students", "Vex V5", "build robots", "competition"],
+                    template: "This article is mainly about _________, and I think it is interesting because _________.",
+                    model: "This article is mainly about how students use Vex V5 to build robots for a competition, and I think it is interesting because they program it to move autonomously."
+                },
+                {
+                    q: "Detail: What was the main job of the bold robot built by the team?",
+                    hints: ["pick up", "heavy green cubes", "put them on", "platform"],
+                    template: "The main job of the robot was to _________ and _________.",
+                    model: "The main job of the robot was to pick up heavy green cubes and put them on a high platform."
+                }
+            ]
+        },
+        2: {
+            navTitle: "Technic MOC",
+            title: "Lego Technic MOC: Building Without Rules",
+            bannerEmoji: "⚙️🚙",
+            bannerGradient: "linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%)", 
+            levels: {
+                500: "Have you ever built a Lego set and thought, 'I want to make my own design?' That is called a MOC, which stands for My Own Creation. When you build a MOC, you do not use any instruction books. You just use your <span class='inline-vocab' onclick='openPopup(event, \"imagination\")'>imagination</span> and a big box of Lego Technic parts. Technic parts are special because they have <span class='inline-vocab' onclick='openPopup(event, \"gears\")'>gears</span>, pins, and axles. They let you build machines that can really move.<br><br>In March, a 10-year-old boy named Leo built an amazing MOC. He created a giant off-road truck. He did not have a map or a guide. He started with the chassis, which is the bottom frame of the truck. Then, he added a special suspension system. This system uses springs to help the truck drive over big rocks without breaking. Leo spent weeks modifying his truck in the backyard dirt. <br><br>Building a MOC is like being a real <span class='inline-vocab' onclick='openPopup(event, \"inventor\")'>inventor</span>. Sometimes the parts do not fit, or the gears get stuck. Leo had to rebuild his truck's engine three times! But making mistakes is how you learn to be a great builder. When his truck finally climbed the highest rock, Leo felt incredibly proud. His custom MOC shows that with a little creativity, you can build anything.",
+                550: "Have you ever assembled a Lego set and decided, 'I want to engineer my own unique design?' This concept is known as a MOC, an acronym for My Own Creation. When constructing a MOC, builders completely ignore official instruction manuals. Instead, they rely purely on their <span class='inline-vocab' onclick='openPopup(event, \"imagination\")'>imagination</span> and a vast collection of Lego Technic components. Technic elements are unique because they include intricate <span class='inline-vocab' onclick='openPopup(event, \"gears\")'>gears</span>, connecting pins, and axles. They allow creators to engineer complex mechanisms that possess real kinetic movement.<br><br>In March, a talented 10-year-old named Leo engineered an extraordinary MOC. He designed a massive, rugged off-road vehicle. Operating without any blueprints or guides, he began by constructing a robust chassis, which serves as the foundational frame of the vehicle. Following that, he integrated an advanced suspension system. This specific mechanism utilizes shock-absorbing springs, enabling the vehicle to navigate over large boulders without suffering structural damage. Leo spent weeks modifying and testing his vehicle in challenging backyard terrain.<br><br>Engineering a MOC is comparable to being a professional <span class='inline-vocab' onclick='openPopup(event, \"inventor\")'>inventor</span>. Frequently, components fail to align correctly, or gear trains become jammed. In fact, Leo was forced to reconstruct his vehicle's motorized engine on three separate occasions! However, encountering and analyzing these failures is essential for developing superior building skills. When his vehicle finally conquered the steepest rock incline, Leo experienced profound pride. His custom MOC demonstrates that with sufficient creativity and persistence, practically anything can be constructed.",
+                600: "Have you ever completed a commercial Lego set and subsequently resolved, 'I intend to engineer a completely original design?' In the building community, this is referred to as a MOC, an acronym signifying My Own Creation. During the construction of a MOC, builders deliberately discard official instructional schematics. Instead, they rely exclusively on spatial <span class='inline-vocab' onclick='openPopup(event, \"imagination\")'>imagination</span> and an extensive inventory of specialized Lego Technic components. Technic elements are fundamentally unique, incorporating complex interlocking <span class='inline-vocab' onclick='openPopup(event, \"gears\")'>gears</span>, structural pins, and rotational axles. These parts empower creators to engineer sophisticated mechanical systems capable of genuine kinetic movement.<br><br>In March, an exceptionally talented 10-year-old named Leo engineered a phenomenal MOC. He meticulously designed a massive, all-terrain off-road vehicle. Operating entirely without blueprints or structural guides, he initiated the project by fabricating a highly robust chassis, serving as the vehicle's foundational framework. Subsequently, he integrated a highly advanced, independent suspension system. This complex mechanism utilizes specialized shock-absorbing springs, allowing the vehicle to traverse significant geological obstacles without compromising its structural integrity. Leo dedicated weeks to modifying and rigorously field-testing his vehicle in unforgiving backyard terrain.<br><br>Engineering a complex MOC parallels the authentic experience of a professional mechanical <span class='inline-vocab' onclick='openPopup(event, \"inventor\")'>inventor</span>. Frequently, structural components fail to align with precision, or complex gear trains experience critical binding. In reality, Leo was compelled to completely deconstruct and rebuild his vehicle's motorized propulsion system on three distinct occasions! Nevertheless, analyzing and overcoming these mechanical failures is fundamental to cultivating elite engineering proficiency. When his customized vehicle ultimately conquered the maximum vertical incline, Leo experienced profound satisfaction. His intricate MOC unequivocally demonstrates that with creativity and relentless persistence, extraordinary mechanical feats can be achieved."
+            },
+            dict: { "imagination": "The ability to think of new ideas or form pictures in your mind.", "gears": "Wheels with teeth that fit together to make a machine move.", "inventor": "A person who creates or discovers a new process or machine." },
+            chunks: [ "When you build a MOC, / you do not use / any instruction books, / but instead / you use your imagination." ],
+            guess: [
+                { word: "MOC", context: "That is called a MOC, which stands for My Own Creation.", options: ["A remote control device", "A custom model built from your own imagination", "A type of special Lego battery"], answer: 1 },
+                { word: "chassis", context: "He started with the chassis, which is the bottom frame of the truck.", options: ["The base or bottom structure of a vehicle", "The steering wheel", "The bright stickers on the doors"], answer: 0 }
+            ],
+            writing: [
+                {
+                    q: "What is the main idea of this article?",
+                    hints: ["Leo", "built", "off-road truck", "imagination"],
+                    template: "This article is mainly about _________, and it shows that _________.",
+                    model: "This article is mainly about how Leo built an off-road truck, and it shows that you can use imagination to build anything."
+                },
+                {
+                    q: "Detail: What does the suspension system do for the truck?",
+                    hints: ["suspension system", "uses springs", "drive over rocks"],
+                    template: "The suspension system helps the truck by _________.",
+                    model: "The suspension system helps the truck by using springs to drive over rocks without breaking."
+                }
+            ]
+        },
+        3: {
+            navTitle: "Eco Robots",
+            title: "Student Robots: Solving Environmental Problems",
+            bannerEmoji: "🌍♻️",
+            bannerGradient: "linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%)", 
+            levels: {
+                500: "Have you ever looked around and seen trash on the ground or in the water? It is a huge problem for our planet, and we need to fix it. But a group of smart students has a brilliant new idea. They use their skills with parts from Vex and Lego Technic to design robots that can clean up our <span class='inline-vocab' onclick='openPopup(event, \"environment\")'>environment</span>. In early March, a team of young inventors shared their amazing machine. It was built specifically to help sort different types of litter from scratch.<br><br>The special litter-sorting robot looked extremely interesting. It had a unique arm with a big net and a conveyor belt to move the trash. Its main job was to check each piece of litter and segregate it into categories, which means separating plastic from paper. To do this, it uses a powerful computer brain and special sensors, which act like tiny robot eyes. The students spent countless afternoons testing their robot at a nearby beach. They needed to program it, giving it <span class='inline-vocab' onclick='openPopup(event, \"precise\")'>precise</span> instructions to know what is trash.<br><br>At a big environmental event, a large crowd gathered to watch the robot sort trash. It was a massive success. The students were very proud to show how technology can protect the planet. Building robots is not just for playing games. They are powerful tools for learning to solve real-world problems. This amazing technology shows us that even young students can make a huge <span class='inline-vocab' onclick='openPopup(event, \"impact\")'>impact</span> on the world. The young inventors promised to keep improving their robot.",
+                550: "Have you ever observed trash on the ground or floating in the water? Environmental pollution is a significant challenge for our planet, and it is crucial to address it. However, a group of innovative students has developed a brilliant new concept. They utilize their foundational knowledge of systems like Vex and Lego Technic to engineer robots capable of cleaning our <span class='inline-vocab' onclick='openPopup(event, \"environment\")'>environment</span>. In early March, a team of dedicated young inventors presented their astonishing machine. It was specifically constructed to autonomously help sort various types of litter.<br><br>The unique litter-sorting robot presented a highly interesting design. It incorporated a versatile articulated arm with a mesh net and a motorized conveyor belt to manipulate the refuse. Its primary objective was to analyze each piece of litter and segregate it into precise categories, such as separating recyclable plastics from paper products. To achieve this, it utilized a robust computer brain and specialized sensors, essentially functioning as artificial eyes. The students dedicated countless afternoons testing their ambitious robot at a local beach. They needed to deeply program it, which involved providing the machine with a <span class='inline-vocab' onclick='openPopup(event, \"precise\")'>precise</span> sequence of instructions to successfully identify trash.<br><br>At a significant environmental conference, a vast crowd gathered to observe the robot in operation. It was a massive success, operating with flawless efficiency. The students were incredibly proud to demonstrate how advanced technology can be leveraged to protect the planet. Engineering robots is not exclusively for entertainment. It serves as a powerful educational instrument for acquiring critical problem-solving skills and addressing real-world issues. This innovative technology demonstrates that even young students possess the potential to make a substantial <span class='inline-vocab' onclick='openPopup(event, \"impact\")'>impact</span> on the world.",
+                600: "Have you ever personally observed refuse contaminating the ground or floating in a local body of water? Global environmental pollution presents a significant challenge for our planet, necessitating innovative solutions to address the crisis. However, a dedicated group of innovative students has developed a brilliant, proactive concept. Leveraging their foundational engineering comprehension derived from systems like Vex and Lego Technic, they are successfully constructing robots designed to remediate our <span class='inline-vocab' onclick='openPopup(event, \"environment\")'>environment</span>. In early March, a team of young, talented inventors showcased their astonishing robotic platform. It was meticulously constructed specifically to facilitate the autonomous sorting of diverse types of litter.<br><br>The complex litter-segregation robot showcased an intricate, articulated design. It incorporated a unique, multi-jointed arm with a custom-engineered mesh net and a motorized conveyor belt system to efficiently manipulate collected refuse. Its primary objective was to acquire data from each piece of litter and systematically segregate it into precise categories, such as differentiating recyclable polymer plastics from paper fibers for optimal recycling. To achieve this, the machine utilized a robust central processing computer brain and specialized, high-resolution sensors, essentially functioning as sophisticated artificial optical inputs. The students dedicated numerous afternoons to rigorous field tests, analyzing operational data at a local beach. They had meticulously programmed the robot, involving a complex sequence of <span class='inline-vocab' onclick='openPopup(event, \"precise\")'>precise</span> operational instructions to accurately identify various types of common refuse.<br><br>At a significant environmental conference, a vast audience gathered to observe the complex robot in operation. It was a monumental success, operating with remarkable consistency and efficiency. The students were profoundly proud to demonstrate how advanced robotic technology can be leveraged to remediate delicate ecosystems and protect the environment. Engineering these complex systems is not merely for recreation. They serve as essential educational tools for acquiring critical problem-solving methodologies and addressing complex global issues. This innovative technology demonstrates that even young students possess the remarkable potential to generate a positive <span class='inline-vocab' onclick='openPopup(event, \"impact\")'>impact</span> on the world."
+            },
+            dict: { "environment": "The natural world around us, including land, water, and air.", "precise": "Exact and accurate; carefully clearly defined.", "impact": "A strong effect or influence on a situation or person." },
+            chunks: [ "Its primary objective was / to analyze each piece of litter / and segregate it / into precise categories / for recycling." ],
+            guess: [
+                { word: "litter", context: "It was built specifically to help sort different types of litter from scratch.", options: ["Small pieces of trash left on the ground", "Little baby animals", "Tools for fixing cars"], answer: 0 },
+                { word: "segregate", context: "Its main job was to check each piece of litter and segregate it into categories.", options: ["To paint it a new color", "To separate things into different groups", "To burn it with fire"], answer: 1 }
+            ],
+            writing: [
+                {
+                    q: "What is the main idea of this article?",
+                    hints: ["students", "robots", "sort litter", "environment"],
+                    template: "This article is mainly about _________, and it teaches us to _________.",
+                    model: "This article is mainly about how students use robots to sort litter, and it teaches us to protect the environment."
+                },
+                {
+                    q: "Detail: How do the sensors help the robot?",
+                    hints: ["sensors", "act like", "tiny robot eyes"],
+                    template: "The sensors act like _________ to help the robot _________.",
+                    model: "The sensors act like tiny robot eyes to help the robot check each piece of litter."
+                }
+            ]
+        }
+    };
+
+    let currentArticleId = 1; let currentLevel = 500; let unlockedLevels = { 1: false, 2: false, 3: false }; let fontSizeRem = 1.25;
+
+    function init() { if (newsData[1]) { renderNav(); loadArticle(1); } document.addEventListener('click', (e) => { if (!e.target.closest('#vocab-popup') && !e.target.classList.contains('inline-vocab')) { closePopup(); } }); }
+
+    function renderNav() {
+        const navContainer = document.getElementById('article-nav'); navContainer.innerHTML = '';
+        for (let id in newsData) {
+            const btn = document.createElement('button'); btn.className = `nav-btn ${id == currentArticleId ? 'active' : ''}`;
+            btn.innerText = newsData[id].navTitle; btn.onclick = () => loadArticle(id); navContainer.appendChild(btn);
+        }
+    }
+
+    function loadArticle(id) {
+        currentArticleId = id; currentLevel = 500; updateTabsUI(); renderNav();
+        
+        const banner = document.getElementById('banner-display');
+        banner.style.background = newsData[id].bannerGradient;
+        banner.innerText = newsData[id].bannerEmoji;
+        
+        document.getElementById('title-display').innerText = newsData[id].title;
+        updateArticleText(); renderChunks(); renderGuessWords(); renderWriting();
+        
+        document.getElementById('feedback-display').innerHTML = '';
+        document.getElementById('unlock-msg').style.display = unlockedLevels[id] ? 'block' : 'none';
+        document.getElementById('submit-btn').disabled = unlockedLevels[id];
+        document.getElementById('submit-btn').innerText = unlockedLevels[id] ? "Completed (Challenge Unlocked)" : "Submit Answers & Get Feedback";
+    }
+
+    function updateArticleText() {
+        document.getElementById('content-display').innerHTML = newsData[currentArticleId].levels[currentLevel];
+        document.getElementById('content-display').style.fontSize = fontSizeRem + 'rem';
+    }
+
+    function adjustFontSize(change) {
+        fontSizeRem += change; if (fontSizeRem < 1.0) fontSizeRem = 1.0; if (fontSizeRem > 2.0) fontSizeRem = 2.0;
+        document.getElementById('content-display').style.fontSize = fontSizeRem + 'rem';
+    }
+
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            let msg = new SpeechSynthesisUtterance(text);
+            msg.lang = 'en-US'; msg.rate = 0.85; window.speechSynthesis.speak(msg);
+        }
+    }
+    
+    function toggleReadAloud() { let text = document.getElementById('content-display').innerText; speakText(text); }
+
+    function openPopup(event, wordKey) {
+        event.stopPropagation(); const popup = document.getElementById('vocab-popup'); const dictionary = newsData[currentArticleId].dict;
+        document.getElementById('popup-word-text').innerText = wordKey; document.getElementById('popup-def-text').innerText = dictionary[wordKey] || "Definition not found.";
+        
+        // 修改：处理手机端弹窗溢出和定位问题
+        popup.style.display = 'block'; 
+        const rect = event.target.getBoundingClientRect(); 
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        popup.style.top = (rect.bottom + scrollTop + 8) + 'px';
+        
+        let leftPos = rect.left; 
+        if (window.innerWidth <= 992) {
+            // 手机端直接居中，宽度 90vw (在CSS中控制了)
+            popup.style.left = '5vw';
+        } else {
+            // 电脑端防溢出
+            if (leftPos + 300 > window.innerWidth) leftPos = window.innerWidth - 320; 
+            popup.style.left = leftPos + 'px';
+        }
+    }
+    
+    function closePopup() { document.getElementById('vocab-popup').style.display = 'none'; }
+    function speakWord() { let w = document.getElementById('popup-word-text').innerText; speakText(w); }
+
+    function renderChunks() {
+        const chunkBox = document.getElementById('chunk-display');
+        const sentence = newsData[currentArticleId].chunks[0];
+        const parts = sentence.split('/').map(p => p.trim());
+        chunkBox.innerHTML = `<div class="chunk-box">` + parts.map(p => `<span class="chunk" onclick="speakText('${p}')" title="Listen">${p}</span>`).join(' ') + `</div>`;
+    }
+
+    function renderGuessWords() {
+        const guessBox = document.getElementById('guess-display'); const guesses = newsData[currentArticleId].guess;
+        guessBox.innerHTML = guesses.map((g, index) => `
+            <div class="question">
+                <div class="q-text">What does <span style="color:var(--purple); text-transform:uppercase;">${g.word}</span> mean here?</div>
+                <div class="q-context">"...${g.context}..."</div>
+                <div class="options">${g.options.map((opt, i) => `<label><input type="radio" name="g${index}" value="${i}"> ${opt}</label>`).join('')}</div>
+            </div>`).join('');
+    }
+
+    function insertHint(textareaId, hintText) {
+        const textarea = document.getElementById(textareaId);
+        const text = textarea.value;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        
+        if (start !== end) {
+            textarea.value = text.substring(0, start) + hintText + text.substring(end);
+            textarea.selectionEnd = start + hintText.length;
+        } else {
+            const underscoreIndex = text.indexOf("_________");
+            if(underscoreIndex !== -1) {
+                textarea.value = text.substring(0, underscoreIndex) + hintText + text.substring(underscoreIndex + 9);
+            } else {
+                textarea.value = text.substring(0, start) + (start > 0 && text[start-1] !== ' ' ? ' ' : '') + hintText + text.substring(end);
+            }
+        }
+        textarea.focus();
+    }
+
+    function renderWriting() {
+        const writingBox = document.getElementById('writing-display'); 
+        const writing = newsData[currentArticleId].writing;
+        
+        writingBox.innerHTML = `
+            <div style="font-size:0.85rem; color:var(--accent); background:#eff6ff; padding:10px; border-radius:8px; margin-bottom: 1rem; font-weight: 600;">
+                💡 Tip: Click the blue hint words to automatically fill in the blanks!
+            </div>
+            ` + writing.map((w, index) => `
+            <div class="question">
+                <div class="q-text">${index + 1}. ${w.q}</div>
+                <div class="hint-container">
+                    ${w.hints.map(hint => `<span class="hint-pill" onclick="insertHint('w${index}', '${hint.replace(/'/g, "\\'")}')">+ ${hint}</span>`).join('')}
+                </div>
+                <textarea class="writing-area" id="w${index}">${w.template}</textarea>
+                <div class="teacher-feedback" id="feedback-w${index}"></div>
+            </div>`).join('');
+    }
+
+    function evaluateWriting(text, hints, model) {
+        let feedback = "👩‍🏫 <b>Teacher's Feedback:</b><br>";
+        let textLower = text.toLowerCase().trim();
+
+        let usedHints = hints.filter(h => textLower.includes(h.toLowerCase()));
+        if (usedHints.length === hints.length) {
+            feedback += "✅ <b>Vocabulary:</b> Excellent! You used all the hint words.<br>";
+        } else if (usedHints.length > 0) {
+            feedback += `✅ <b>Vocabulary:</b> Good start. You used some hint words, but try to include all of them next time.<br>`;
+        } else {
+            feedback += `💡 <b>Vocabulary:</b> Try clicking the blue hint words to build your sentence.<br>`;
+        }
+
+        let startsWithCapital = /^[A-Z]/.test(text.trim());
+        let endsWithPunctuation = /[.!?]$/.test(text.trim());
+        
+        if (!startsWithCapital) feedback += "📝 <b>Grammar:</b> Remember to start your sentence with a capital letter!<br>";
+        if (!endsWithPunctuation) feedback += "📝 <b>Grammar:</b> Don't forget to put a period (.) at the end of your sentence.<br>";
+        if (startsWithCapital && endsWithPunctuation) feedback += "✅ <b>Grammar:</b> Perfect sentence structure (Capitalization and Punctuation).<br>";
+
+        if (text.includes("_________")) {
+            feedback += "⚠️ <b>Note:</b> You forgot to replace some of the blank lines (_________).<br>";
+        }
+
+        feedback += `<br><b>✨ Teacher's Example:</b><br><i>${model}</i>`;
+        return feedback;
+    }
+
+    function checkAllAnswers() {
+        let allAnswered = true;
+        let guessScore = 0;
+        
+        const guesses = newsData[currentArticleId].guess;
+        for (let i = 0; i < guesses.length; i++) {
+            const selected = document.querySelector(`input[name="g${i}"]:checked`);
+            if (!selected) { allAnswered = false; break; }
+            if (parseInt(selected.value) === guesses[i].answer) guessScore++;
+        }
+        
+        const writing = newsData[currentArticleId].writing;
+        for (let i = 0; i < writing.length; i++) {
+            const text = document.getElementById(`w${i}`).value.trim();
+            if (text.length === 0 || text === writing[i].template) { allAnswered = false; break; }
+        }
+
+        const feedbackPanel = document.getElementById('feedback-display');
+        
+        if (!allAnswered) { 
+            feedbackPanel.innerHTML = `<span style="color:var(--error)">Please finish all questions and fill in the blanks before submitting!</span>`; 
+            return; 
+        }
+
+        if (guessScore < guesses.length) {
+            feedbackPanel.innerHTML = `<span style="color:var(--error)">You got ${guessScore}/${guesses.length} on the guessing questions. Check the context clues and try again!</span>`;
+            return;
+        }
+
+        for (let i = 0; i < writing.length; i++) {
+            const text = document.getElementById(`w${i}`).value;
+            const feedbackHTML = evaluateWriting(text, writing[i].hints, writing[i].model);
+            const feedbackDiv = document.getElementById(`feedback-w${i}`);
+            feedbackDiv.innerHTML = feedbackHTML;
+            feedbackDiv.style.display = 'block';
+        }
+
+        feedbackPanel.innerHTML = `<span style="color:var(--success)">🌟 Great effort! Check the Teacher's Feedback below your writing.</span>`;
+        unlockedLevels[currentArticleId] = true; 
+        document.getElementById('unlock-msg').style.display = 'block';
+        document.getElementById('submit-btn').disabled = true; 
+        document.getElementById('submit-btn').innerText = "Completed (Challenge Unlocked)";
+        updateTabsUI(); 
+    }
+
+    function switchLevel(level) { if (!unlockedLevels[currentArticleId] && level > 500) return; currentLevel = level; updateArticleText(); updateTabsUI(); }
+    function attemptChallenge(level) { if (!unlockedLevels[currentArticleId]) { document.getElementById('feedback-display').innerHTML = `<span style="color:var(--error)">🔒 Please complete the tasks to unlock the challenge!</span>`; } else { switchLevel(level); } }
+    function updateTabsUI() {
+        const tabs = [500, 550, 600];
+        tabs.forEach(lvl => {
+            const tab = document.getElementById(`tab-${lvl}`); tab.className = 'level-tab';
+            if (lvl > 500 && !unlockedLevels[currentArticleId]) { tab.classList.add('locked'); tab.innerText = `🔒 ${lvl}L`; } else { tab.innerText = `${lvl}L`; }
+            if (lvl === currentLevel) tab.classList.add('active');
+        });
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
